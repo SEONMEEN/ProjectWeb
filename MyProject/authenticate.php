@@ -1,6 +1,6 @@
 <?php
 session_start();
-$conn = new mysqli('localhost', 'root', '12345678', 'shop_shoose');
+$conn = new mysqli('localhost', 'root', '12345678', 'mydb');
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         exit();
     } else {
+        include 'login.php';
         echo "Invalid username or password.";
     }
 }

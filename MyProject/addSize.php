@@ -156,7 +156,7 @@ if (isset($_POST['add_product'])) {
         <a href="admin_dashboard.php" class="home-button"><i class="bi bi-house-heart"></i></a>
     </div>
     <div class="form-container">
-        <h2>Add Product</h2>
+        <h2>Add Size</h2>
 
         <!-- แสดงข้อความแจ้งเตือน -->
         <?php if ($message): ?>

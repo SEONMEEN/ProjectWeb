@@ -72,17 +72,6 @@ if (isset($_POST['add_product'])) {
             color: #fff;
         }
 
-        .header {
-            background-color: #FDDDE6;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 50px;
-        }
 
         .form-container {
             max-width: 500px;

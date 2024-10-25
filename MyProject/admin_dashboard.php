@@ -5,8 +5,6 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
     exit();
 }
 
-?>
-<?php
 // เปิดการแสดงผลข้อผิดพลาด
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -18,36 +16,42 @@ $userPassword = "12345678";
 $dbName = "mydb";
 $conn = mysqli_connect($serverName, $userName, $userPassword, $dbName);
 
-// ตรวจสอบว่ามีการกดปุ่มเพิ่มสินค้าหรือไม่
-$message = '';
-if (isset($_POST['submit'])) {
+// ตรวจสอบการเชื่อมต่อกับฐานข้อมูล
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
 
-    // รับค่าจากฟอร์ม
+if (isset($_POST['submit'])) {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = mysqli_real_escape_string($conn, $_POST['password']);
     $role = mysqli_real_escape_string($conn, $_POST['role']);
 
-
-    // ตรวจสอบว่าข้อมูลทุกช่องถูกกรอกครบหรือไม่
-    if (empty($username) || empty($email) | empty($password) | empty($role)) {
-        $message = 'Please fill out all fields!';
+    if (empty($username) || empty($email) || empty($password) || empty($role)) {
+        $_SESSION['message'] = ['type' => 'danger', 'text' => 'Please fill out all fields!'];
     } else {
-        // คำสั่ง SQL สำหรับเพิ่มสินค้า
-        $insert = "INSERT INTO users(username,email,password,role) 
-                   VALUES('$username', '$email', '$password','$role')";
+        $checkQuery = "SELECT * FROM users WHERE username = '$username' OR email = '$email'";
+        $result = mysqli_query($conn, $checkQuery);
 
-        $upload = mysqli_query($conn, $insert);
-
-        // ตรวจสอบว่าการอัปโหลดสำเร็จหรือไม่
-        if ($upload) {
-            $message = 'Product added successfully!'; // แจ้งเพิ่มสินค้าสำเร็จ
+        if (mysqli_num_rows($result) > 0) {
+            $_SESSION['message'] = ['type' => 'warning', 'text' => 'Username or email already exists!'];
         } else {
-            $message = 'Could not add the product, please try again!'; // แจ้งไม่สามารถเพิ่มได้
+            $insert = "INSERT INTO users(username, email, password, role) 
+                       VALUES('$username', '$email', '$password', '$role')";
+
+            if (mysqli_query($conn, $insert)) {
+                $_SESSION['message'] = ['type' => 'success', 'text' => 'User added successfully!'];
+            } else {
+                $_SESSION['message'] = ['type' => 'danger', 'text' => 'Could not add the user, please try again!'];
+            }
         }
     }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -63,6 +67,9 @@ if (isset($_POST['submit'])) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="css/headerstyle.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <style>
         body {
             padding: 0;
@@ -161,6 +168,7 @@ if (isset($_POST['submit'])) {
             z-index: 0;
             /* Behind the button text */
         }
+
         .button-card {
             background-color: white;
             border-radius: 8px;
@@ -174,6 +182,7 @@ if (isset($_POST['submit'])) {
         .button-card:hover {
             transform: translateY(-5px);
         }
+
         /* Shadow effect */
         .btn {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -239,7 +248,8 @@ if (isset($_POST['submit'])) {
             margin-top: 20px;
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -249,7 +259,8 @@ if (isset($_POST['submit'])) {
             font-size: 16px;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             border-color: #0984e3;
             box-shadow: 0 0 8px rgba(9, 132, 227, 0.5);
             outline: none;
@@ -286,7 +297,15 @@ if (isset($_POST['submit'])) {
 <body>
     <div class="header">
         <div class="lobster-regular">StepIntoStyle</div>
+
     </div>
+    <?php if (isset($_SESSION['message'])): ?>
+            <div class="alert alert-<?php echo $_SESSION['message']['type']; ?> alert-dismissible fade show" role="alert">
+                <?php echo $_SESSION['message']['text']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['message']); ?>
+        <?php endif; ?>
     <div class="pic">
         <i class="icon bi bi-person-badge-fill"></i>
         <h3>Welcome, Admin <?php echo $_SESSION['username']; ?></h3>
@@ -297,7 +316,7 @@ if (isset($_POST['submit'])) {
             <a href="addSize.php" class="btn b4" style="color: white; text-decoration: none;">Add Size</a>
             <a href="editProduct.php" class="btn b2" style="color: white; text-decoration: none;">Edit Product</a>
         </div>
-        <div class="button-card">
+        <div class="">
             <button class="btn btn-info" onclick="toggleForm()">Register New User</button>
 
             <form id="registrationForm" action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
@@ -316,7 +335,7 @@ if (isset($_POST['submit'])) {
                     <option value="admin">Admin</option>
                 </select>
 
-                <button type="submit" name="submit">Sign Up</button>
+                <button type="submit" class="btn" name="submit">Sign Up</button>
             </form>
         </div>
         <a href="logout.php" class="btn b3 btn-outline-danger" style="color: white; text-decoration: none;">Logout</a>

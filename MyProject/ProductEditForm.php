@@ -33,10 +33,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmtUpdateProduct->execute();
 
     // อัปเดตข้อมูลขนาดและสต็อกในตาราง sizes
-    foreach ($stockUpdates as $size => $stock) {
-        $sqlUpdateStock = "UPDATE sizes SET stock = ? WHERE prodID = ? AND size = ?";
+    foreach ($stockUpdates as $sizeID => $stock) {
+        $sqlUpdateStock = "UPDATE sizes SET stock = ? WHERE prodID = ? AND sizeID = ?";
         $stmtUpdateStock = $conn->prepare($sqlUpdateStock);
-        $stmtUpdateStock->bind_param("iis", $stock, $prodID, $size);
+        $stmtUpdateStock->bind_param("iii", $stock, $prodID, $sizeID);  // sizeID แทน size
         $stmtUpdateStock->execute();
     }
 
@@ -52,7 +52,7 @@ $result = $stmt->get_result();
 $product = $result->fetch_assoc();
 
 // Query ขนาดและจำนวนสินค้าจากตาราง sizes
-$sizeSql = "SELECT size, stock FROM sizes WHERE prodID = ?";
+$sizeSql = "SELECT sizeID, size, stock FROM sizes WHERE prodID = ?";
 $sizeStmt = $conn->prepare($sizeSql);
 $sizeStmt->bind_param("i", $prodID);
 $sizeStmt->execute();
@@ -63,7 +63,7 @@ $sizeQuery = $sizeStmt->get_result();
 
 <head>
     <title>Edit Product Form</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/headerstyle.css">
     <style>
         body {
@@ -72,8 +72,6 @@ $sizeQuery = $sizeStmt->get_result();
             font-family: 'Poppins', sans-serif;
             background-color: #f0f0f0;
         }
-
-       
 
         .form-container {
             max-width: 550px;
@@ -96,7 +94,8 @@ $sizeQuery = $sizeStmt->get_result();
             border-collapse: collapse;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             text-align: left;
         }
@@ -164,7 +163,7 @@ $sizeQuery = $sizeStmt->get_result();
 
 <body>
 
-<div class="header">
+    <div class="header">
         <div class="lobster-regular">StepIntoStyle</div>
         <a href="admin_dashboard.php" class="home-button"><i class="bi bi-house-heart"></i></a>
     </div>
@@ -186,7 +185,7 @@ $sizeQuery = $sizeStmt->get_result();
                     <th>Product ID</th>
                     <td>
                         <input type="hidden" name="txtProdID" value="<?php echo $product['prodID']; ?>">
-                        <?php echo $product['prodID']; ?>
+                        <?php echo $prodID ?>
                     </td>
                 </tr>
                 <tr>
@@ -201,9 +200,15 @@ $sizeQuery = $sizeStmt->get_result();
                     <th>Available Sizes & Stock</th>
                     <td>
                         <?php
-                        while ($size = $sizeQuery->fetch_assoc()) {
-                            echo "<div class='size-stock'>Size: " . $size['size'] . " - Stock: <input type='text' name='stock[" . $size['size'] . "]' value='" . $size['stock'] . "'></div>";
+
+                        if ($sizeQuery->num_rows > 0) {
+                            while ($size = $sizeQuery->fetch_assoc()) {
+                                echo "<div class='size-stock'>Size: " . $size['size'] . " - Stock: <input type='text' name='stock[" . $size['sizeID'] . "]' value='" . $size['stock'] . "'></div>";
+                            }
+                        } else {
+                            echo "No sizes found for this product.";
                         }
+
                         ?>
                     </td>
                 </tr>
@@ -216,7 +221,7 @@ $sizeQuery = $sizeStmt->get_result();
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wl56AwSP18JGAZz7p7TReb5YmQlXgrk3dLVFvTztDnpRmXkQJQOdICy0oe5F5bo/" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

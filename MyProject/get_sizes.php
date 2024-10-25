@@ -12,7 +12,7 @@ if ($conn->connect_error) {
 
 $prodID = $_GET['prodID'];
 
-$sql = "SELECT size FROM sizes WHERE prodID = ?";
+$sql = "SELECT * FROM sizes WHERE prodID = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $prodID);
 $stmt->execute();
@@ -20,8 +20,11 @@ $result = $stmt->get_result();
 
 $sizes = "";
 if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $sizes .= "<option value='{$row['size']}'>{$row['size']}</option>";
+    while ($row = $result->fetch_assoc() ) {
+        if ($row['stock'] > 0) {
+            $sizes .= "<option value='{$row['size']}'>{$row['size']}</option>";
+        }
+       
     }
 } else {
     $sizes = "<option disabled>No sizes available</option>";
