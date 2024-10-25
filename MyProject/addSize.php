@@ -15,29 +15,23 @@ $message = '';
 if (isset($_POST['add_product'])) {
 
     // รับค่าจากฟอร์ม
-    $product_name = mysqli_real_escape_string($conn, $_POST['name']);
-    $product_brand = mysqli_real_escape_string($conn, $_POST['brand_id']);
-    $product_price = mysqli_real_escape_string($conn, $_POST['price']);
-    
-    // จัดการรูปภาพ
-    $product_image = $_FILES['image']['name'];
-    $product_image_tmp_name = $_FILES['image']['tmp_name'];
-    $product_image_folder = 'uploads/' . basename($product_image);
+    $product_id = mysqli_real_escape_string($conn, $_POST['productid']);
+    $product_size = mysqli_real_escape_string($conn, $_POST['size']);
+    $product_stock = mysqli_real_escape_string($conn, $_POST['stock']);
+
 
     // ตรวจสอบว่าข้อมูลทุกช่องถูกกรอกครบหรือไม่
-    if (empty($product_name) || empty($product_brand) || empty($product_price) || empty($product_image)) {
+    if (empty($product_size) || empty($product_stock)) {
         $message = 'Please fill out all fields!';
     } else {
         // คำสั่ง SQL สำหรับเพิ่มสินค้า
-        
-        $insert = "INSERT INTO products(prodName, brandID, price, prodImage) 
-                   VALUES('$product_name', '$product_brand', '$product_price', '$product_image_folder')";
+        $insert = "INSERT INTO sizes(prodID, size, stock) 
+                   VALUES('$product_id', '$product_size', '$product_stock')";
 
         $upload = mysqli_query($conn, $insert);
 
         // ตรวจสอบว่าการอัปโหลดสำเร็จหรือไม่
         if ($upload) {
-            move_uploaded_file($product_image_tmp_name, $product_image_folder);
             $message = 'Product added successfully!'; // แจ้งเพิ่มสินค้าสำเร็จ
         } else {
             $message = 'Could not add the product, please try again!'; // แจ้งไม่สามารถเพิ่มได้
@@ -52,7 +46,7 @@ if (isset($_POST['add_product'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StepIntoStyle - Add Product</title>
+    <title>Add Product</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
@@ -60,6 +54,7 @@ if (isset($_POST['add_product'])) {
     <link rel="stylesheet" href="css/headerstyle.css">
     <style>
         body {
+            background-color: #f4f4f4;
             padding: 0;
             margin: 0;
             font-family: 'Poppins', sans-serif;
@@ -72,52 +67,61 @@ if (isset($_POST['add_product'])) {
             color: #fff;
         }
 
-        .header {
-            background-color: #FDDDE6;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 50px;
-        }
 
         .form-container {
-            max-width: 500px;
+            width: 400px;
             margin: 0 auto;
-            padding: 40px;
+            background-color: white;
+            padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .form-container h2 {
             text-align: center;
             margin-bottom: 20px;
-            color: #333;
+            font-size: 24px;
+            font-weight: 500;
         }
 
-        .form-container input,
-        .form-container select {
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
+        .form-container .form-control {
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: inset 3px 3px 5px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
         }
 
-        .form-container input:focus,
-        .form-container select:focus {
-            border-color: #FFBBDF;
-            outline: none;
-            box-shadow: 0 0 10px rgba(255, 187, 223, 0.5), inset 0 0 5px rgba(255, 187, 223, 0.3);
+        .form-container select.form-control {
+            appearance: none;
+            padding-right: 40px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZmlsbD0iIzAwMCI+PHBhdGggZD0iTTYgNy41TDExIDEgNy45MiAwIDYgMi4xMyA0LjA4IDAgMSAwIDExbDYgNy41eiIvPjwvc3ZnPg==') no-repeat right 10px center;
         }
 
         .form-container button {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        button {
             width: 100%;
             padding: 15px;
             background: linear-gradient(145deg, #FE74B4, #EB3C7C);
@@ -131,25 +135,23 @@ if (isset($_POST['add_product'])) {
             transition: all 0.3s;
         }
 
-        .form-container button:hover {
+
+
+        button:hover {
             background: linear-gradient(145deg, #EB3C7C, #FE74B4);
             box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
             transform: translateY(-3px);
         }
 
-        .form-container button:active {
+        button:active {
             transform: translateY(1px);
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .alert {
-            margin-top: 20px;
         }
     </style>
 </head>
 
 <body>
-<div class="header">
+    <div class="header">
         <div class="lobster-regular">StepIntoStyle</div>
         <a href="admin_dashboard.php" class="home-button"><i class="bi bi-house-heart"></i></a>
     </div>
@@ -162,18 +164,36 @@ if (isset($_POST['add_product'])) {
         <?php endif; ?>
 
         <form id="add-product-form" action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST" enctype="multipart/form-data">
-            <input type="text" name="name" class="form-control" placeholder="Product Name" required>
-            <select name="brand_id" class="form-control" required>
-                <option value="" disabled selected>Select Brand</option>
-                <option value="3">Adidas</option>
-                <option value="1">Nike</option>
-                <option value="2">Puma</option>
-                <option value="4">Converse</option>
-                <option value="5">Others</option>
-            </select>
-            <input type="number" name="price" class="form-control" placeholder="Price" required>
-            <input type="file" name="image" class="form-control" accept="image/*" required>
-            <button type="submit" name="add_product" class="btn">Add Product</button>
+            <?php
+            // เชื่อมต่อฐานข้อมูล
+            $conn = mysqli_connect($serverName, $userName, $userPassword, $dbName);
+
+            if (!$conn) {
+                die("Connection failed: " . mysqli_connect_error());
+            }
+
+            // ดึงข้อมูลจากตาราง products
+            $sql = "SELECT prodID, prodName FROM products";
+            $result = mysqli_query($conn, $sql);
+
+            if (mysqli_num_rows($result) > 0) {
+                echo '<select name="productid" id="product" class="form-control">';
+                // แสดงผลแต่ละรายการใน select
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo '<option value="' . $row['prodID'] . '">' . $row['prodName'] . '</option>';
+                }
+                echo '</select>';
+            } else {
+                echo "ไม่มีข้อมูลสินค้า";
+            }
+
+            // ปิดการเชื่อมต่อฐานข้อมูล
+            mysqli_close($conn);
+            ?>
+
+            <input type="number" name="size" class="form-control" placeholder="Size" required>
+            <input type="number" name="stock" class="form-control" placeholder="Stock" required>
+            <button type="submit" name="add_product">Add Size</button>
         </form>
     </div>
 </body>

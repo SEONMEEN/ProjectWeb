@@ -4,6 +4,49 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
     header("Location: login.php");
     exit();
 }
+
+?>
+<?php
+// เปิดการแสดงผลข้อผิดพลาด
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// ตั้งค่าการเชื่อมต่อกับฐานข้อมูล
+$serverName = "localhost";
+$userName = "root";
+$userPassword = "12345678";
+$dbName = "mydb";
+$conn = mysqli_connect($serverName, $userName, $userPassword, $dbName);
+
+// ตรวจสอบว่ามีการกดปุ่มเพิ่มสินค้าหรือไม่
+$message = '';
+if (isset($_POST['submit'])) {
+
+    // รับค่าจากฟอร์ม
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $role = mysqli_real_escape_string($conn, $_POST['role']);
+
+
+    // ตรวจสอบว่าข้อมูลทุกช่องถูกกรอกครบหรือไม่
+    if (empty($username) || empty($email) | empty($password) | empty($role)) {
+        $message = 'Please fill out all fields!';
+    } else {
+        // คำสั่ง SQL สำหรับเพิ่มสินค้า
+        $insert = "INSERT INTO users(username,email,password,role) 
+                   VALUES('$username', '$email', '$password','$role')";
+
+        $upload = mysqli_query($conn, $insert);
+
+        // ตรวจสอบว่าการอัปโหลดสำเร็จหรือไม่
+        if ($upload) {
+            $message = 'Product added successfully!'; // แจ้งเพิ่มสินค้าสำเร็จ
+        } else {
+            $message = 'Could not add the product, please try again!'; // แจ้งไม่สามารถเพิ่มได้
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -19,6 +62,7 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/headerstyle.css">
     <style>
         body {
             padding: 0;
@@ -36,18 +80,6 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
         }
 
         /* Header styles */
-        .header {
-            background-color: #FDDDE6;
-            height: 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            margin: 0;
-            padding: 0;
-        }
 
         .pic {
             display: flex;
@@ -129,7 +161,19 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
             z-index: 0;
             /* Behind the button text */
         }
+        .button-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
 
+        .button-card:hover {
+            transform: translateY(-5px);
+        }
         /* Shadow effect */
         .btn {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -171,21 +215,70 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
             background-color: #c82333;
         }
 
-
-
-        /* Card styles for buttons */
-        .button-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.2s;
-            margin-bottom: 15px;
+        .b4 {
+            background-color: #28a745;
         }
 
-        .button-card:hover {
-            transform: translateY(-5px);
+        .b4:hover {
+            background-color: #218838;
+        }
+
+        /* Card styles for buttons */
+        h4 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 30px;
+        }
+
+        #registrationForm {
+            display: none;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            border-color: #0984e3;
+            box-shadow: 0 0 8px rgba(9, 132, 227, 0.5);
+            outline: none;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background-color: #6c5ce7;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #a29bfe;
+        }
+
+        button[type="submit"]:active {
+            background-color: #5a3cba;
+            transform: scale(0.98);
+        }
+
+        .btn-info {
+            width: 100%;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -201,10 +294,39 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] != 'admin') {
     <div class="butt">
         <div class="button-card">
             <a href="addProduct.php" class="btn b1" style="color: white; text-decoration: none;">Add Product</a>
+            <a href="addSize.php" class="btn b4" style="color: white; text-decoration: none;">Add Size</a>
             <a href="editProduct.php" class="btn b2" style="color: white; text-decoration: none;">Edit Product</a>
+        </div>
+        <div class="button-card">
+            <button class="btn btn-info" onclick="toggleForm()">Register New User</button>
+
+            <form id="registrationForm" action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
+                <label for="email">Email:</label>
+                <input type="email" name="email" id="email" required>
+
+                <label for="username">Username:</label>
+                <input type="text" name="username" id="username" required>
+
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" required>
+
+                <label for="role">Role:</label>
+                <select name="role" id="role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+
+                <button type="submit" name="submit">Sign Up</button>
+            </form>
         </div>
         <a href="logout.php" class="btn b3 btn-outline-danger" style="color: white; text-decoration: none;">Logout</a>
     </div>
+    <script>
+        function toggleForm() {
+            const form = document.getElementById('registrationForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
 </body>
 
 </html>

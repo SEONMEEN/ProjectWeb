@@ -1,86 +1,226 @@
+<?php
+ini_set('display_errors', 1);
+error_reporting(~0);
+
+$servername = "localhost";
+$username = "root";
+$password = "12345678";
+$dbname = "mydb";
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+$updateSuccess = false;
+
+// ตรวจสอบการรับค่า Product ID จาก URL
+if (isset($_GET["ProbID"])) {
+    $prodID = $_GET["ProbID"];
+}
+
+// ตรวจสอบว่ามีการส่งฟอร์มหรือไม่
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // รับค่าจากฟอร์ม
+    $prodName = $_POST['txtProdName'];
+    $price = $_POST['txtPrice'];
+    $stockUpdates = $_POST['stock'];
+
+    // อัปเดตข้อมูลสินค้าลงในตาราง products
+    $sqlUpdateProduct = "UPDATE products SET prodName = ?, price = ? WHERE prodID = ?";
+    $stmtUpdateProduct = $conn->prepare($sqlUpdateProduct);
+    $stmtUpdateProduct->bind_param("sdi", $prodName, $price, $prodID);
+    $stmtUpdateProduct->execute();
+
+    // อัปเดตข้อมูลขนาดและสต็อกในตาราง sizes
+    foreach ($stockUpdates as $size => $stock) {
+        $sqlUpdateStock = "UPDATE sizes SET stock = ? WHERE prodID = ? AND size = ?";
+        $stmtUpdateStock = $conn->prepare($sqlUpdateStock);
+        $stmtUpdateStock->bind_param("iis", $stock, $prodID, $size);
+        $stmtUpdateStock->execute();
+    }
+
+    $updateSuccess = true;
+}
+
+// Query ข้อมูลสินค้าจากตาราง products
+$sql = "SELECT * FROM products WHERE prodID = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $prodID);
+$stmt->execute();
+$result = $stmt->get_result();
+$product = $result->fetch_assoc();
+
+// Query ขนาดและจำนวนสินค้าจากตาราง sizes
+$sizeSql = "SELECT size, stock FROM sizes WHERE prodID = ?";
+$sizeStmt = $conn->prepare($sizeSql);
+$sizeStmt->bind_param("i", $prodID);
+$sizeStmt->execute();
+$sizeQuery = $sizeStmt->get_result();
+?>
+
 <html>
 
 <head>
     <title>Edit Product Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/headerstyle.css">
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f0f0;
+        }
+
+       
+
+        .form-container {
+            max-width: 550px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            text-align: center;
+            color: #444;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #FDDDE6;
+            color: #333;
+            border-radius: 8px;
+        }
+
+        td input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .size-stock {
+            margin-bottom: 15px;
+        }
+
+        .size-stock input[type="text"] {
+            width: 60px;
+            padding: 8px;
+            margin-left: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            border: none;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .b1 {
+            background-color: #FDDDE6;
+            color: #333;
+        }
+
+        .b1:hover {
+            background-color: #e3c2ce;
+        }
+
+        .b2 {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .b2:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 
 <body>
-    <?php
-    ini_set('display_errors', 1);
-    error_reporting(~0);
 
-    // ตรวจสอบการรับค่า Product ID จาก URL
-    if (isset($_GET["ProbID"])) {
-        $prodID = $_GET["ProbID"];
-    }
+<div class="header">
+        <div class="lobster-regular">StepIntoStyle</div>
+        <a href="admin_dashboard.php" class="home-button"><i class="bi bi-house-heart"></i></a>
+    </div>
 
-    // การเชื่อมต่อฐานข้อมูล
-    $servername = "localhost";
-    $username = "root";
-    $password = "12345678";
-    $dbname = "mydatabase";
-    $conn = mysqli_connect($servername, $username, $password, $dbname);
+    <div class="form-container">
+        <h2>Edit Product Form</h2>
 
-    // ตรวจสอบการเชื่อมต่อฐานข้อมูล
-    if (!$conn) {
-        die("Connection failed: " . mysqli_connect_error());
-    }
+        <!-- แสดงกล่องแจ้งเตือนเมื่อมีการอัปเดตข้อมูลสำเร็จ -->
+        <?php if ($updateSuccess) { ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Product information updated successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php } ?>
 
-    // Query ข้อมูลสินค้าจากตาราง products
-    $sql = "SELECT * FROM products WHERE prodID = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $prodID);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $product = $result->fetch_assoc();
+        <form action="" method="post">
+            <table class="table">
+                <tr>
+                    <th>Product ID</th>
+                    <td>
+                        <input type="hidden" name="txtProdID" value="<?php echo $product['prodID']; ?>">
+                        <?php echo $product['prodID']; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Product Name</th>
+                    <td><input type="text" name="txtProdName" value="<?php echo $product['prodName']; ?>"></td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td><input type="text" name="txtPrice" value="<?php echo $product['price']; ?>"></td>
+                </tr>
+                <tr>
+                    <th>Available Sizes & Stock</th>
+                    <td>
+                        <?php
+                        while ($size = $sizeQuery->fetch_assoc()) {
+                            echo "<div class='size-stock'>Size: " . $size['size'] . " - Stock: <input type='text' name='stock[" . $size['size'] . "]' value='" . $size['stock'] . "'></div>";
+                        }
+                        ?>
+                    </td>
+                </tr>
+            </table>
 
-    // Query ขนาดและจำนวนสินค้าจากตาราง sizes ที่สัมพันธ์กับ prodID
-    $sizeSql = "SELECT size, stock FROM sizes WHERE prodID = ?";
-    $sizeStmt = $conn->prepare($sizeSql);
-    $sizeStmt->bind_param("i", $prodID);
-    $sizeStmt->execute();
-    $sizeQuery = $sizeStmt->get_result();
-    ?>
+            <div class="form-actions">
+                <input type="submit" class="btn b1" value="Update Product">
+                <a href="editProduct.php" class="btn b2">Cancel</a>
+            </div>
+        </form>
+    </div>
 
-    <h2>Edit Product Form</h2>
-    <form action="ProductEditSave.php" method="post">
-        <table width="400" border="1">
-            <tr>
-                <th width="120">Product ID</th>
-                <td width="280">
-                    <input type="hidden" name="txtProdID" value="<?php echo $product['prodID']; ?>">
-                    <?php echo $product['prodID']; ?>
-                </td>
-            </tr>
-            <tr>
-                <th width="120">Product Name</th>
-                <td><input type="text" name="txtProdName" size="30" value="<?php echo $product['prodName']; ?>"></td>
-            </tr>
-            <tr>
-                <th width="120">Price</th>
-                <td><input type="text" name="txtPrice" size="10" value="<?php echo $product['price']; ?>"></td>
-            </tr>
-            <tr>
-                <th width="120">Available Sizes & Stock</th>
-                <td>
-                    <?php
-                    // วนลูปแสดงขนาดของสินค้าและจำนวนสินค้า (stock) ในรูปแบบ input field
-                    while ($size = $sizeQuery->fetch_assoc()) {
-                        echo "Size: " . $size['size'] . " - Stock: <input type='text' name='stock[" . $size['size'] . "]' value='" . $size['stock'] . "' size='5'><br>";
-                    }
-                    ?>
-                </td>
-            </tr>
-        </table>
-        <br>
-        <input type="submit" name="submit" value="Save Changes">
-        <input type="reset" name="reset" value="Cancel">
-    </form>
-
-    <?php
-    // ปิดการเชื่อมต่อฐานข้อมูล
-    mysqli_close($conn);
-    ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wl56AwSP18JGAZz7p7TReb5YmQlXgrk3dLVFvTztDnpRmXkQJQOdICy0oe5F5bo/" crossorigin="anonymous"></script>
 </body>
 
 </html>
+
+<?php
+mysqli_close($conn);
+?>
