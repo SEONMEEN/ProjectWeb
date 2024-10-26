@@ -74,13 +74,13 @@ if ($sizeResult->num_rows > 0) {
         $updateOrderItemsStmt = $conn->prepare($updateOrderItemsSql);
         $updateOrderItemsStmt->bind_param("iii", $quantity, $userID, $sizeID);
         $updateOrderItemsStmt->execute();
-        echo json_encode(['success' => true, 'message' => 'Order updated successfully!']);
+       
     } else {
         $insertOrderItemsSql = "INSERT INTO orderitems (userID, quantity, sizeID) VALUES (?, ?, ?)";
         $insertOrderItemsStmt = $conn->prepare($insertOrderItemsSql);
         $insertOrderItemsStmt->bind_param("iii", $userID, $quantity, $sizeID);
         $insertOrderItemsStmt->execute();
-        echo json_encode(['success' => true, 'message' => 'Order placed successfully!']);
+        
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'ไม่พบข้อมูล sizeID หรือ stock']);
